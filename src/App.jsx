@@ -53,9 +53,10 @@ function App() {
 
   // Variants & Cross-variant flows
   const [variants, setVariants] = useState([
-    { id: 'default', name: 'Main App', icon: '📱', owner: '', description: '', screens: [], testCases: [] }
+    { id: 'default', name: 'Main App', icon: '📱', owner: '', description: '', screens: [], testCases: [], messages: [], mobileScreenshots: [], desktopScreenshots: [] }
   ])
   const [activeVariant, setActiveVariant] = useState(null)
+  const prevVariantRef = useRef(null)
   const [crossVariantFlows, setCrossVariantFlows] = useState([
     // Demo flow for testing
     {
@@ -93,6 +94,43 @@ function App() {
   const isLoadingProject = useRef(false)
 
   // ── Effects ──
+
+  // Initialize activeVariant on mount
+  useEffect(() => {
+    if (!activeVariant && variants.length > 0) {
+      setActiveVariant(variants[0])
+    }
+  }, [])
+
+  // Handle variant switching - save/load per-variant data
+  useEffect(() => {
+    if (!activeVariant) return
+
+    const prevVariant = prevVariantRef.current
+
+    // Save current data to previous variant before switching
+    if (prevVariant && prevVariant.id !== activeVariant.id) {
+      setVariants(prev => prev.map(v =>
+        v.id === prevVariant.id
+          ? {
+              ...v,
+              messages: chat.messages,
+              mobileScreenshots: screenshots.mobileScreenshots,
+              desktopScreenshots: screenshots.desktopScreenshots
+            }
+          : v
+      ))
+    }
+
+    // Load data from new active variant
+    const variantData = variants.find(v => v.id === activeVariant.id)
+    if (variantData) {
+      chat.setMessages(variantData.messages || [])
+      screenshots.setScreenshots(variantData.mobileScreenshots || [], variantData.desktopScreenshots || [])
+    }
+
+    prevVariantRef.current = activeVariant
+  }, [activeVariant?.id])
 
   // Auto-scroll chat
   useEffect(() => {
@@ -298,27 +336,77 @@ function App() {
 
   // ── Project state ──
 
-  const getProjectState = () => ({
-    name: projectName,
-    appName,
-    messages: chat.messages,
-    mobileScreenshots: screenshots.mobileScreenshots,
-    desktopScreenshots: screenshots.desktopScreenshots,
-    collectedAnswers: testGen.collectedAnswers,
-    analysisContext: testGen.analysisContext,
-    allTestCases: testGen.allTestCases,
-    runHistory,
-    pendingQuestions: testGen.pendingQuestions,
-    currentQ: testGen.currentQ,
-    reusableModules,
-  })
+  const getProjectState = () => {
+    // Sync current variant data before saving
+    const updatedVariants = variants.map(v =>
+      v.id === activeVariant?.id
+        ? {
+            ...v,
+            messages: chat.messages,
+            mobileScreenshots: screenshots.mobileScreenshots,
+            desktopScreenshots: screenshots.desktopScreenshots
+          }
+        : v
+    )
+
+    return {
+      name: projectName,
+      appName,
+      variants: updatedVariants,
+      activeVariantId: activeVariant?.id,
+      crossVariantFlows,
+      collectedAnswers: testGen.collectedAnswers,
+      analysisContext: testGen.analysisContext,
+      allTestCases: testGen.allTestCases,
+      runHistory,
+      pendingQuestions: testGen.pendingQuestions,
+      currentQ: testGen.currentQ,
+      reusableModules,
+      // Legacy fields for backward compatibility
+      messages: chat.messages,
+      mobileScreenshots: screenshots.mobileScreenshots,
+      desktopScreenshots: screenshots.desktopScreenshots,
+    }
+  }
 
   const loadProjectState = (data) => {
     isLoadingProject.current = true
     setProjectName(data.name || 'Imported Project')
     setAppName(data.appName || '')
-    chat.setMessages(data.messages || [])
-    screenshots.setScreenshots(data.mobileScreenshots, data.desktopScreenshots)
+
+    // Load variants (with backward compatibility)
+    if (data.variants && data.variants.length > 0) {
+      setVariants(data.variants)
+      const activeVar = data.variants.find(v => v.id === data.activeVariantId) || data.variants[0]
+      setActiveVariant(activeVar)
+      prevVariantRef.current = activeVar
+      chat.setMessages(activeVar.messages || [])
+      screenshots.setScreenshots(activeVar.mobileScreenshots || [], activeVar.desktopScreenshots || [])
+    } else {
+      // Legacy project without variants - migrate to default variant
+      const defaultVariant = {
+        id: 'default',
+        name: 'Main App',
+        icon: '📱',
+        owner: '',
+        description: '',
+        screens: [],
+        testCases: [],
+        messages: data.messages || [],
+        mobileScreenshots: data.mobileScreenshots || [],
+        desktopScreenshots: data.desktopScreenshots || []
+      }
+      setVariants([defaultVariant])
+      setActiveVariant(defaultVariant)
+      prevVariantRef.current = defaultVariant
+      chat.setMessages(data.messages || [])
+      screenshots.setScreenshots(data.mobileScreenshots, data.desktopScreenshots)
+    }
+
+    if (data.crossVariantFlows) {
+      setCrossVariantFlows(data.crossVariantFlows)
+    }
+
     testGen.setState(data)
     setRunHistory(data.runHistory || {})
     setReusableModules(data.reusableModules || [])
@@ -329,6 +417,25 @@ function App() {
   const handleCreateProject = (name) => {
     setProjectName(name)
     setAppName('')
+
+    // Reset to default variant
+    const defaultVariant = {
+      id: 'default',
+      name: 'Main App',
+      icon: '📱',
+      owner: '',
+      description: '',
+      screens: [],
+      testCases: [],
+      messages: [],
+      mobileScreenshots: [],
+      desktopScreenshots: []
+    }
+    setVariants([defaultVariant])
+    setActiveVariant(defaultVariant)
+    prevVariantRef.current = defaultVariant
+    setCrossVariantFlows([])
+
     chat.clearMessages()
     screenshots.clearScreenshots()
     testGen.clearGeneration()
@@ -337,11 +444,6 @@ function App() {
     setReusableModules([])
     chat.setInput('')
     setCurrentView('workspace')
-  }
-
-  const handleSave = async () => {
-    await exportProjectJSON(getProjectState())
-    showToast('Project saved')
   }
 
   const handleRunComplete = (testCaseId, result) => {
@@ -381,9 +483,19 @@ function App() {
     setVariants((prev) => {
       const existing = prev.findIndex((v) => v.id === variant.id)
       if (existing >= 0) {
-        return prev.map((v, i) => (i === existing ? variant : v))
+        // Update existing - preserve messages/screenshots
+        return prev.map((v, i) => (i === existing ? { ...v, ...variant } : v))
       }
-      return [...prev, variant]
+      // New variant - initialize with empty arrays
+      const newVariant = {
+        ...variant,
+        messages: [],
+        mobileScreenshots: [],
+        desktopScreenshots: [],
+        screens: [],
+        testCases: []
+      }
+      return [...prev, newVariant]
     })
     if (!activeVariant) setActiveVariant(variant)
     setShowVariantEditor(false)
