@@ -7,6 +7,7 @@ export default function VariantTabs({
   onAddVariant,
   onEditVariant,
   onManageFlows,
+  onManageDevices,
 }) {
   const [showMenu, setShowMenu] = useState(null)
 
@@ -49,10 +50,16 @@ export default function VariantTabs({
           + Add Variant
         </button>
       </div>
-      <button className="variant-flows-btn" onClick={onManageFlows}>
-        <span className="flows-icon">🔗</span>
-        Cross-Variant Flows
-      </button>
+      <div className="variant-actions">
+        <button className="variant-devices-btn" onClick={onManageDevices}>
+          <span className="devices-icon">📱</span>
+          Devices
+        </button>
+        <button className="variant-flows-btn" onClick={onManageFlows}>
+          <span className="flows-icon">🔗</span>
+          Flows
+        </button>
+      </div>
     </div>
   )
 }

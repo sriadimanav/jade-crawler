@@ -12,7 +12,7 @@ import backIcon from './assets/back.svg'
 import { useScreenshots, useEmulator, useChat, useTestGeneration } from './hooks'
 
 // Components
-import { QuestionCard, FloatingEmulator, PinnedEmulator, ScreenshotsList, SmartSummary, isLongMessage, CollapsibleTestCases, VariantTabs, VariantEditor, CrossVariantFlows, FlowCanvas } from './components'
+import { QuestionCard, FloatingEmulator, PinnedEmulator, ScreenshotsList, SmartSummary, isLongMessage, CollapsibleTestCases, VariantTabs, VariantEditor, CrossVariantFlows, FlowCanvas, DeviceManager } from './components'
 
 // Pre-bundled app screenshots for emulator demo
 import img1 from './assets/1_landing_page.png'
@@ -77,6 +77,7 @@ function App() {
   const [editingVariant, setEditingVariant] = useState(null)
   const [showCrossFlows, setShowCrossFlows] = useState(false)
   const [selectedFlow, setSelectedFlow] = useState(null)
+  const [showDeviceManager, setShowDeviceManager] = useState(false)
 
   // UI state
   const [toast, setToast] = useState(null)
@@ -632,6 +633,7 @@ function App() {
             onAddVariant={() => { setEditingVariant(null); setShowVariantEditor(true) }}
             onEditVariant={(v) => { setEditingVariant(v); setShowVariantEditor(true) }}
             onManageFlows={() => setShowCrossFlows(true)}
+            onManageDevices={() => setShowDeviceManager(true)}
           />
         )}
 
@@ -798,6 +800,16 @@ function App() {
           onDeleteFlow={handleDeleteFlow}
           onRunFlow={handleRunFlow}
           onClose={() => setShowCrossFlows(false)}
+        />
+      )}
+
+      {showDeviceManager && (
+        <DeviceManager
+          variants={variants}
+          onUpdateVariant={(updatedVariant) => {
+            setVariants(prev => prev.map(v => v.id === updatedVariant.id ? updatedVariant : v))
+          }}
+          onClose={() => setShowDeviceManager(false)}
         />
       )}
     </div>

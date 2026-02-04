@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { generateCrossVariantFlows } from '../ai'
+import FlowExecutor from './FlowExecutor'
 
 export default function CrossVariantFlows({
   flows,
@@ -14,6 +15,7 @@ export default function CrossVariantFlows({
   const [editingFlow, setEditingFlow] = useState(null)
   const [generating, setGenerating] = useState(false)
   const [suggestions, setSuggestions] = useState([])
+  const [executingFlow, setExecutingFlow] = useState(null)
 
   const handleGenerateWithAI = async () => {
     if (variants.length < 2) return
@@ -93,15 +95,6 @@ export default function CrossVariantFlows({
               <span className="empty-icon">🔗</span>
               <p>No cross-variant flows yet</p>
               <span>Create flows that test end-to-end scenarios across multiple app variants</span>
-              {variants.length >= 2 && (
-                <button
-                  className="generate-ai-btn"
-                  onClick={handleGenerateWithAI}
-                  disabled={generating}
-                >
-                  {generating ? '✨ Generating...' : '✨ Generate with AI'}
-                </button>
-              )}
             </div>
           ) : (
             <div className="cross-flows-list">
@@ -138,6 +131,7 @@ export default function CrossVariantFlows({
                     )}
                   </div>
                   <div className="flow-card-actions">
+                    <button className="run" onClick={() => setExecutingFlow(flow)}>▶ Run</button>
                     <button className="primary" onClick={() => onRunFlow(flow)}>Open Canvas</button>
                     <button onClick={() => setEditingFlow(flow)}>Edit Steps</button>
                     <button className="delete" onClick={() => onDeleteFlow(flow.id)}>Delete</button>
@@ -181,6 +175,14 @@ export default function CrossVariantFlows({
             setShowCreate(false)
             setEditingFlow(null)
           }}
+        />
+      )}
+      {executingFlow && (
+        <FlowExecutor
+          flow={executingFlow}
+          variants={variants}
+          onClose={() => setExecutingFlow(null)}
+          onComplete={(result) => console.log('Flow completed:', result)}
         />
       )}
     </div>

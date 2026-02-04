@@ -2,7 +2,10 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import fs from 'fs'
 import path from 'path'
+import { exec } from 'child_process'
+import { promisify } from 'util'
 
+const execAsync = promisify(exec)
 const PROJECTS_DIR = path.resolve(__dirname, 'projects')
 
 function safePath(base, ...segments) {
@@ -178,6 +181,102 @@ function projectsApi() {
           } catch (err) {
             res.statusCode = 500
             res.end(JSON.stringify({ error: err.message }))
+          }
+        })
+      })
+
+      // GET /api/devices — list connected Android devices and iOS simulators
+      server.middlewares.use('/api/devices', async (req, res, next) => {
+        if (req.method !== 'GET') return next()
+
+        const devices = []
+
+        try {
+          // Get Android devices via adb
+          try {
+            const { stdout: adbOutput } = await execAsync('adb devices -l')
+            const lines = adbOutput.split('\n').slice(1) // Skip header
+            for (const line of lines) {
+              if (!line.trim() || line.includes('offline')) continue
+              const match = line.match(/^(\S+)\s+device\s+(.*)$/)
+              if (match) {
+                const [, id, info] = match
+                const modelMatch = info.match(/model:(\S+)/)
+                const model = modelMatch ? modelMatch[1].replace(/_/g, ' ') : id
+                devices.push({
+                  id,
+                  name: model,
+                  type: 'android',
+                  status: 'online',
+                  info: info.trim(),
+                })
+              }
+            }
+          } catch (e) {
+            // adb not available
+          }
+
+          // Get iOS simulators via xcrun (macOS only)
+          try {
+            const { stdout: simOutput } = await execAsync('xcrun simctl list devices available -j')
+            const simData = JSON.parse(simOutput)
+            for (const runtime of Object.values(simData.devices || {})) {
+              for (const sim of runtime) {
+                if (sim.state === 'Booted') {
+                  devices.push({
+                    id: sim.udid,
+                    name: sim.name,
+                    type: 'ios',
+                    status: 'online',
+                  })
+                }
+              }
+            }
+          } catch (e) {
+            // xcrun not available (not macOS or no Xcode)
+          }
+
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ devices }))
+        } catch (err) {
+          res.statusCode = 500
+          res.end(JSON.stringify({ error: err.message, devices: [] }))
+        }
+      })
+
+      // POST /api/execute-step — execute a test step on a device
+      server.middlewares.use('/api/execute-step', (req, res, next) => {
+        if (req.method !== 'POST') return next()
+
+        let body = ''
+        req.on('data', chunk => { body += chunk })
+        req.on('end', async () => {
+          try {
+            const { stepId, deviceId, variantId, description, linkedTestCase } = JSON.parse(body)
+
+            // For now, simulate step execution
+            // In production, this would integrate with Maestro, Appium, or custom automation
+            await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 1200))
+
+            // Log the step execution
+            console.log(`[Execute Step] ${stepId} on ${deviceId || 'no device'}`)
+            console.log(`  Variant: ${variantId}`)
+            console.log(`  Description: ${description}`)
+
+            // Simulate success (always succeed in dev mode)
+            const success = true
+
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify({
+              success,
+              stepId,
+              deviceId,
+              message: success ? 'Step completed' : 'Step failed (simulated)',
+              timestamp: new Date().toISOString(),
+            }))
+          } catch (err) {
+            res.statusCode = 500
+            res.end(JSON.stringify({ success: false, error: err.message }))
           }
         })
       })
