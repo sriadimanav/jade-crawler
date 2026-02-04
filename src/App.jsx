@@ -362,10 +362,6 @@ function App() {
       pendingQuestions: testGen.pendingQuestions,
       currentQ: testGen.currentQ,
       reusableModules,
-      // Legacy fields for backward compatibility
-      messages: chat.messages,
-      mobileScreenshots: screenshots.mobileScreenshots,
-      desktopScreenshots: screenshots.desktopScreenshots,
     }
   }
 
@@ -374,39 +370,17 @@ function App() {
     setProjectName(data.name || 'Imported Project')
     setAppName(data.appName || '')
 
-    // Load variants (with backward compatibility)
-    if (data.variants && data.variants.length > 0) {
-      setVariants(data.variants)
-      const activeVar = data.variants.find(v => v.id === data.activeVariantId) || data.variants[0]
+    // Load variants
+    setVariants(data.variants || [])
+    const activeVar = data.variants?.find(v => v.id === data.activeVariantId) || data.variants?.[0]
+    if (activeVar) {
       setActiveVariant(activeVar)
       prevVariantRef.current = activeVar
       chat.setMessages(activeVar.messages || [])
       screenshots.setScreenshots(activeVar.mobileScreenshots || [], activeVar.desktopScreenshots || [])
-    } else {
-      // Legacy project without variants - migrate to default variant
-      const defaultVariant = {
-        id: 'default',
-        name: 'Main App',
-        icon: '📱',
-        owner: '',
-        description: '',
-        screens: [],
-        testCases: [],
-        messages: data.messages || [],
-        mobileScreenshots: data.mobileScreenshots || [],
-        desktopScreenshots: data.desktopScreenshots || []
-      }
-      setVariants([defaultVariant])
-      setActiveVariant(defaultVariant)
-      prevVariantRef.current = defaultVariant
-      chat.setMessages(data.messages || [])
-      screenshots.setScreenshots(data.mobileScreenshots, data.desktopScreenshots)
     }
 
-    if (data.crossVariantFlows) {
-      setCrossVariantFlows(data.crossVariantFlows)
-    }
-
+    setCrossVariantFlows(data.crossVariantFlows || [])
     testGen.setState(data)
     setRunHistory(data.runHistory || {})
     setReusableModules(data.reusableModules || [])
