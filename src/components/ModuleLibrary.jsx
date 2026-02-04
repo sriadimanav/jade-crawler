@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import searchIcon from '../assets/search.svg'
 
 export default function ModuleLibrary({
   modules,
@@ -32,13 +33,16 @@ export default function ModuleLibrary({
       </div>
 
       <div className="module-library-filters">
-        <input
-          type="text"
-          placeholder="Search modules..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="module-search"
-        />
+        <div className="module-search-wrapper">
+          <img src={searchIcon} alt="" className="module-search-icon" />
+          <input
+            type="text"
+            placeholder="Search modules..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="module-search"
+          />
+        </div>
         {allTags.length > 0 && (
           <div className="module-tags">
             <button

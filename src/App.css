@@ -3020,18 +3020,38 @@
   gap: 8px;
 }
 
+.module-search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.module-search-icon {
+  position: absolute;
+  left: 12px;
+  width: 16px;
+  height: 16px;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
 .module-search {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  padding: 8px 12px;
+  padding: 8px 12px 8px 36px;
   color: var(--text-primary);
   font-size: 13px;
+  width: 100%;
 }
 
 .module-search:focus {
   outline: none;
   border-color: var(--accent);
+}
+
+.module-search-wrapper:focus-within .module-search-icon {
+  opacity: 0.8;
 }
 
 .module-tags {
