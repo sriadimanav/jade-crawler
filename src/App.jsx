@@ -53,7 +53,7 @@ function App() {
 
   // Variants & Cross-variant flows
   const [variants, setVariants] = useState([
-    { id: 'default', name: 'Main App', icon: '📱', owner: '', description: '', screens: [], testCases: [], messages: [], mobileScreenshots: [], desktopScreenshots: [] }
+    { id: 'default', name: 'Main App', icon: '📱', owner: 'aditya', description: '', screens: [], testCases: [], messages: [], mobileScreenshots: [], desktopScreenshots: [] }
   ])
   const [activeVariant, setActiveVariant] = useState(null)
   const prevVariantRef = useRef(null)
@@ -141,29 +141,6 @@ function App() {
     const t = setTimeout(scroll, 300)
     return () => clearTimeout(t)
   }, [chat.messages, testGen.currentQ, testGen.generating, currentView])
-
-  // Auto re-analyze when screenshots change (skip on project load)
-  useEffect(() => {
-    // Skip auto-reanalyze when loading a project
-    if (isLoadingProject.current) {
-      isLoadingProject.current = false
-      return
-    }
-    if (!testGen.allTestCases.length || testGen.generating || !testGen.analysisContext) return
-    if (screenshots.totalCount === 0) return
-
-    clearTimeout(testGen.reanalyzeTimer.current)
-    testGen.reanalyzeTimer.current = setTimeout(async () => {
-      const allScreenshots = screenshots.getAllScreenshots()
-      testGen.setGenerating(true)
-      chat.addMessage('assistant', 'Screenshots changed — re-analyzing your app flow...')
-
-      const analysis = await testGen.runAnalysis(allScreenshots, chat.getUserContext(), chat.addMessage)
-      await testGen.runGeneration(analysis, testGen.collectedAnswers, chat.addMessage)
-    }, 1500)
-
-    return () => clearTimeout(testGen.reanalyzeTimer.current)
-  }, [screenshots.mobileScreenshots, screenshots.desktopScreenshots])
 
   // Auto-save
   useEffect(() => {
@@ -397,7 +374,7 @@ function App() {
       id: 'default',
       name: 'Main App',
       icon: '📱',
-      owner: '',
+      owner: 'aditya',
       description: '',
       screens: [],
       testCases: [],

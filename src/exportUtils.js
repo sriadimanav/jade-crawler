@@ -32,7 +32,7 @@ export async function fetchProjectFile(folderName, fileName) {
   const res = await fetch(`/api/project-file?folder=${encodeURIComponent(folderName)}&file=${encodeURIComponent(fileName)}`)
   if (!res.ok) throw new Error('Failed to load project')
   const data = await res.json()
-  if (!data.messages || !data.mobileScreenshots || !data.desktopScreenshots) {
+  if (!data.variants || !Array.isArray(data.variants)) {
     throw new Error('Invalid project file')
   }
   return data
@@ -53,7 +53,7 @@ export function importProjectJSON(file) {
     reader.onload = (e) => {
       try {
         const data = JSON.parse(e.target.result)
-        if (!data.messages || !data.mobileScreenshots || !data.desktopScreenshots) {
+        if (!data.variants || !Array.isArray(data.variants)) {
           reject(new Error('Invalid project file: missing required fields'))
           return
         }

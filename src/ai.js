@@ -435,3 +435,172 @@ function getAnswer(answers, id) {
   const entry = answers.find((a) => a.questionId === id)
   return entry ? entry.answer : null
 }
+
+// ── Generate Cross-Variant Flows ─────────────────────────────────────
+// Analyzes all variants and suggests E2E flows that span multiple apps
+export async function generateCrossVariantFlows(variants) {
+  await delay(1500)
+
+  // Need at least 2 variants to generate cross-variant flows
+  if (!variants || variants.length < 2) {
+    return []
+  }
+
+  // Extract context from each variant
+  const variantContexts = variants.map(v => ({
+    id: v.id,
+    name: v.name,
+    icon: v.icon,
+    description: v.description || '',
+    testCases: v.testCases || [],
+    screensCount: (v.mobileScreenshots?.length || 0) + (v.desktopScreenshots?.length || 0),
+    hasAnalysis: (v.messages || []).some(m => m.text?.includes('analyzed') || m.text?.includes('test cases'))
+  }))
+
+  // Detect app types and relationships
+  const appTypes = detectAppTypes(variantContexts)
+  const flows = generateFlowSuggestions(variantContexts, appTypes)
+
+  return flows
+}
+
+function detectAppTypes(variants) {
+  const types = {}
+
+  variants.forEach(v => {
+    const name = v.name.toLowerCase()
+    const desc = v.description.toLowerCase()
+    const combined = `${name} ${desc}`
+
+    if (combined.includes('user') || combined.includes('customer') || combined.includes('buyer') || combined.includes('main')) {
+      types[v.id] = 'customer'
+    } else if (combined.includes('driver') || combined.includes('delivery') || combined.includes('courier')) {
+      types[v.id] = 'delivery'
+    } else if (combined.includes('merchant') || combined.includes('seller') || combined.includes('vendor') || combined.includes('shop') || combined.includes('restaurant')) {
+      types[v.id] = 'merchant'
+    } else if (combined.includes('admin') || combined.includes('dashboard') || combined.includes('back')) {
+      types[v.id] = 'admin'
+    } else {
+      types[v.id] = 'generic'
+    }
+  })
+
+  return types
+}
+
+function generateFlowSuggestions(variants, appTypes) {
+  const flows = []
+  const hasCustomer = Object.values(appTypes).includes('customer')
+  const hasDelivery = Object.values(appTypes).includes('delivery')
+  const hasMerchant = Object.values(appTypes).includes('merchant')
+  const hasAdmin = Object.values(appTypes).includes('admin')
+
+  const customerVariant = variants.find(v => appTypes[v.id] === 'customer')
+  const deliveryVariant = variants.find(v => appTypes[v.id] === 'delivery')
+  const merchantVariant = variants.find(v => appTypes[v.id] === 'merchant')
+  const adminVariant = variants.find(v => appTypes[v.id] === 'admin')
+
+  // Order Delivery E2E Flow (Customer + Delivery)
+  if (hasCustomer && hasDelivery) {
+    flows.push({
+      id: `flow-${Date.now()}-1`,
+      name: 'Order Delivery E2E',
+      description: 'Complete order flow from customer placement to delivery completion',
+      steps: [
+        { id: 's1', variantId: customerVariant.id, description: 'Customer opens app and browses products/menu', tags: [customerVariant.name] },
+        { id: 's2', variantId: customerVariant.id, description: 'Customer adds items to cart', tags: [customerVariant.name] },
+        { id: 's3', variantId: customerVariant.id, description: 'Customer proceeds to checkout and completes payment', tags: [customerVariant.name, 'Payment'], syncPoint: true },
+        { id: 's4', variantId: deliveryVariant.id, description: 'Driver receives order notification', tags: [deliveryVariant.name, 'Notification'], syncPoint: true },
+        { id: 's5', variantId: deliveryVariant.id, description: 'Driver accepts order and navigates to pickup', tags: [deliveryVariant.name] },
+        { id: 's6', variantId: deliveryVariant.id, description: 'Driver picks up order and starts delivery', tags: [deliveryVariant.name] },
+        { id: 's7', variantId: customerVariant.id, description: 'Customer tracks order in real-time', tags: [customerVariant.name, 'Tracking'] },
+        { id: 's8', variantId: deliveryVariant.id, description: 'Driver completes delivery', tags: [deliveryVariant.name] },
+        { id: 's9', variantId: customerVariant.id, description: 'Customer receives delivery confirmation and rates', tags: [customerVariant.name, 'Rating'] },
+      ]
+    })
+  }
+
+  // Order Cancellation Flow
+  if (hasCustomer && hasDelivery) {
+    flows.push({
+      id: `flow-${Date.now()}-2`,
+      name: 'Order Cancellation',
+      description: 'Test order cancellation scenarios and notifications',
+      steps: [
+        { id: 's1', variantId: customerVariant.id, description: 'Customer places an order', tags: [customerVariant.name] },
+        { id: 's2', variantId: deliveryVariant.id, description: 'Driver receives and accepts order', tags: [deliveryVariant.name], syncPoint: true },
+        { id: 's3', variantId: customerVariant.id, description: 'Customer cancels the order', tags: [customerVariant.name, 'Cancellation'] },
+        { id: 's4', variantId: deliveryVariant.id, description: 'Driver receives cancellation notification', tags: [deliveryVariant.name, 'Notification'] },
+        { id: 's5', variantId: customerVariant.id, description: 'Customer verifies refund initiated', tags: [customerVariant.name, 'Refund'] },
+      ]
+    })
+  }
+
+  // Merchant Order Flow (Customer + Merchant)
+  if (hasCustomer && hasMerchant) {
+    flows.push({
+      id: `flow-${Date.now()}-3`,
+      name: 'Merchant Order Processing',
+      description: 'Order flow from customer to merchant acceptance',
+      steps: [
+        { id: 's1', variantId: customerVariant.id, description: 'Customer browses merchant catalog and places order', tags: [customerVariant.name] },
+        { id: 's2', variantId: merchantVariant.id, description: 'Merchant receives new order notification', tags: [merchantVariant.name, 'Notification'], syncPoint: true },
+        { id: 's3', variantId: merchantVariant.id, description: 'Merchant reviews and accepts order', tags: [merchantVariant.name] },
+        { id: 's4', variantId: customerVariant.id, description: 'Customer receives order confirmation', tags: [customerVariant.name] },
+        { id: 's5', variantId: merchantVariant.id, description: 'Merchant prepares and marks order ready', tags: [merchantVariant.name] },
+        { id: 's6', variantId: customerVariant.id, description: 'Customer receives ready notification', tags: [customerVariant.name, 'Notification'] },
+      ]
+    })
+  }
+
+  // Full Supply Chain (Customer + Merchant + Delivery)
+  if (hasCustomer && hasMerchant && hasDelivery) {
+    flows.push({
+      id: `flow-${Date.now()}-4`,
+      name: 'Full Order Lifecycle',
+      description: 'Complete E2E flow across customer, merchant, and delivery',
+      steps: [
+        { id: 's1', variantId: customerVariant.id, description: 'Customer places order', tags: [customerVariant.name] },
+        { id: 's2', variantId: merchantVariant.id, description: 'Merchant accepts and prepares order', tags: [merchantVariant.name], syncPoint: true },
+        { id: 's3', variantId: merchantVariant.id, description: 'Merchant marks order ready for pickup', tags: [merchantVariant.name] },
+        { id: 's4', variantId: deliveryVariant.id, description: 'Driver assigned and picks up order', tags: [deliveryVariant.name], syncPoint: true },
+        { id: 's5', variantId: deliveryVariant.id, description: 'Driver delivers to customer', tags: [deliveryVariant.name] },
+        { id: 's6', variantId: customerVariant.id, description: 'Customer confirms delivery', tags: [customerVariant.name] },
+      ]
+    })
+  }
+
+  // Admin Oversight Flow
+  if (hasAdmin && (hasCustomer || hasMerchant || hasDelivery)) {
+    const otherVariant = customerVariant || merchantVariant || deliveryVariant
+    flows.push({
+      id: `flow-${Date.now()}-5`,
+      name: 'Admin Oversight',
+      description: 'Admin monitoring and intervention scenarios',
+      steps: [
+        { id: 's1', variantId: otherVariant.id, description: 'User reports an issue', tags: [otherVariant.name, 'Support'] },
+        { id: 's2', variantId: adminVariant.id, description: 'Admin receives support ticket', tags: [adminVariant.name], syncPoint: true },
+        { id: 's3', variantId: adminVariant.id, description: 'Admin reviews and takes action', tags: [adminVariant.name] },
+        { id: 's4', variantId: otherVariant.id, description: 'User receives resolution notification', tags: [otherVariant.name, 'Notification'] },
+      ]
+    })
+  }
+
+  // Generic multi-variant flow if no specific patterns detected
+  if (flows.length === 0 && variants.length >= 2) {
+    flows.push({
+      id: `flow-${Date.now()}-generic`,
+      name: 'Cross-App Integration',
+      description: 'Basic integration flow between apps',
+      steps: variants.map((v, i) => ({
+        id: `s${i + 1}`,
+        variantId: v.id,
+        description: `Action in ${v.name}`,
+        tags: [v.name],
+        syncPoint: i > 0
+      }))
+    })
+  }
+
+  return flows
+}

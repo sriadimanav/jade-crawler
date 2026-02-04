@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { generateCrossVariantFlows } from '../ai'
 
 export default function CrossVariantFlows({
   flows,
@@ -11,6 +12,28 @@ export default function CrossVariantFlows({
 }) {
   const [showCreate, setShowCreate] = useState(false)
   const [editingFlow, setEditingFlow] = useState(null)
+  const [generating, setGenerating] = useState(false)
+  const [suggestions, setSuggestions] = useState([])
+
+  const handleGenerateWithAI = async () => {
+    if (variants.length < 2) return
+    setGenerating(true)
+    try {
+      const generatedFlows = await generateCrossVariantFlows(variants)
+      setSuggestions(generatedFlows)
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  const acceptSuggestion = (flow) => {
+    onCreateFlow(flow)
+    setSuggestions(prev => prev.filter(f => f.id !== flow.id))
+  }
+
+  const dismissSuggestion = (flowId) => {
+    setSuggestions(prev => prev.filter(f => f.id !== flowId))
+  }
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -24,11 +47,61 @@ export default function CrossVariantFlows({
         </div>
 
         <div className="cross-flows-body">
-          {flows.length === 0 ? (
+          {/* AI Suggestions */}
+          {suggestions.length > 0 && (
+            <div className="ai-suggestions-section">
+              <div className="ai-suggestions-header">
+                <span>✨ AI Suggested Flows</span>
+                <button className="dismiss-all-btn" onClick={() => setSuggestions([])}>Dismiss All</button>
+              </div>
+              {suggestions.map((flow) => (
+                <div key={flow.id} className="cross-flow-card suggestion">
+                  <div className="flow-card-header">
+                    <span className="flow-name">{flow.name}</span>
+                    <span className="ai-badge">AI</span>
+                  </div>
+                  {flow.description && (
+                    <p className="flow-description">{flow.description}</p>
+                  )}
+                  <div className="flow-steps-preview">
+                    {flow.steps.slice(0, 3).map((step, i) => {
+                      const variant = variants.find(v => v.id === step.variantId)
+                      return (
+                        <div key={i} className="flow-step-preview">
+                          <span className="step-variant">{variant?.icon}</span>
+                          <span className="step-text">{step.description}</span>
+                        </div>
+                      )
+                    })}
+                    {flow.steps.length > 3 && (
+                      <div className="flow-step-more">+{flow.steps.length - 3} more steps</div>
+                    )}
+                  </div>
+                  <div className="flow-card-actions">
+                    <button className="primary" onClick={() => acceptSuggestion(flow)}>Accept</button>
+                    <button onClick={() => { setEditingFlow(flow); setSuggestions(prev => prev.filter(f => f.id !== flow.id)) }}>Edit & Accept</button>
+                    <button className="delete" onClick={() => dismissSuggestion(flow.id)}>Dismiss</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Existing Flows */}
+          {flows.length === 0 && suggestions.length === 0 ? (
             <div className="cross-flows-empty">
               <span className="empty-icon">🔗</span>
               <p>No cross-variant flows yet</p>
               <span>Create flows that test end-to-end scenarios across multiple app variants</span>
+              {variants.length >= 2 && (
+                <button
+                  className="generate-ai-btn"
+                  onClick={handleGenerateWithAI}
+                  disabled={generating}
+                >
+                  {generating ? '✨ Generating...' : '✨ Generate with AI'}
+                </button>
+              )}
             </div>
           ) : (
             <div className="cross-flows-list">
@@ -76,6 +149,15 @@ export default function CrossVariantFlows({
         </div>
 
         <div className="cross-flows-footer">
+          {variants.length >= 2 && (
+            <button
+              className="generate-ai-btn secondary"
+              onClick={handleGenerateWithAI}
+              disabled={generating}
+            >
+              {generating ? '✨ Generating...' : '✨ Generate with AI'}
+            </button>
+          )}
           <button className="create-flow-btn" onClick={() => setShowCreate(true)}>
             + Create New Flow
           </button>

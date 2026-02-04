@@ -4164,12 +4164,6 @@
   font-size: 14px;
   cursor: pointer;
   padding: 2px 4px;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.variant-tab:hover .variant-tab-menu-btn {
-  opacity: 1;
 }
 
 .variant-tab-menu-btn:hover {
@@ -4615,10 +4609,39 @@
 .cross-flows-footer {
   padding: 16px 20px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  gap: 12px;
+}
+
+.generate-ai-btn {
+  padding: 12px 20px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.2));
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  border-radius: 8px;
+  color: #c4b5fd;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.generate-ai-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.3));
+  border-color: rgba(139, 92, 246, 0.6);
+}
+
+.generate-ai-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.generate-ai-btn.secondary {
+  flex-shrink: 0;
 }
 
 .create-flow-btn {
-  width: 100%;
+  flex: 1;
   padding: 12px;
   background: rgba(139, 92, 246, 0.15);
   border: 1px solid rgba(139, 92, 246, 0.3);
@@ -4632,6 +4655,57 @@
 
 .create-flow-btn:hover {
   background: rgba(139, 92, 246, 0.25);
+}
+
+/* AI Suggestions */
+.ai-suggestions-section {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.ai-suggestions-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #c4b5fd;
+}
+
+.dismiss-all-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.dismiss-all-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.cross-flow-card.suggestion {
+  border-color: rgba(139, 92, 246, 0.3);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(236, 72, 153, 0.05));
+}
+
+.ai-badge {
+  padding: 2px 8px;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: white;
+  text-transform: uppercase;
+}
+
+.cross-flows-empty .generate-ai-btn {
+  margin-top: 16px;
 }
 
 /* Flow Editor */
