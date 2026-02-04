@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 420" width="260" height="420">
+  <rect width="260" height="420" fill="#1c1c1e"/>
+
+  <!-- Status bar -->
+  <text x="20" y="30" font-family="system-ui,sans-serif" font-size="12" fill="white" font-weight="600">9:41</text>
+
+  <!-- Time -->
+  <text x="130" y="100" font-family="system-ui,sans-serif" font-size="48" fill="white" text-anchor="middle" font-weight="200">9:41</text>
+  <text x="130" y="120" font-family="system-ui,sans-serif" font-size="11" fill="#888" text-anchor="middle">Saturday, February 1</text>
+
+  <!-- Single App Icon -->
+  <rect x="90" y="180" width="80" height="80" rx="18" fill="#d4824a"/>
+  <text x="130" y="215" font-family="system-ui,sans-serif" font-size="28" fill="white" text-anchor="middle" font-weight="700">HL</text>
+  <text x="130" y="235" font-family="system-ui,sans-serif" font-size="9" fill="rgba(255,255,255,0.8)" text-anchor="middle">HOME LOAN</text>
+  <text x="130" y="278" font-family="system-ui,sans-serif" font-size="11" fill="#ccc" text-anchor="middle">Home Loan</text>
+
+  <!-- Home indicator -->
+  <rect x="85" y="402" width="90" height="4" rx="2" fill="rgba(255,255,255,0.3)"/>
+</svg>

@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <defs>
+    <linearGradient id="gemGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4ade80"/>
+      <stop offset="50%" stop-color="#22c55e"/>
+      <stop offset="100%" stop-color="#15803d"/>
+    </linearGradient>
+    <linearGradient id="highlightGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#86efac" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#22c55e" stop-opacity="0.2"/>
+    </linearGradient>
+    <linearGradient id="shadowGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#166534"/>
+      <stop offset="100%" stop-color="#14532d"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#15803d" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+  
+  <!-- Main gem body - octagon shape -->
+  <g filter="url(#shadow)">
+    <!-- Back facets -->
+    <polygon points="50,8 75,20 85,50 75,80 50,92 25,80 15,50 25,20" fill="url(#gemGradient)" filter="url(#glow)"/>
+    
+    <!-- Top facet -->
+    <polygon points="50,8 75,20 50,35 25,20" fill="url(#highlightGradient)"/>
+    
+    <!-- Upper left facet -->
+    <polygon points="25,20 50,35 35,50 15,50" fill="#4ade80" opacity="0.9"/>
+    
+    <!-- Upper right facet -->
+    <polygon points="75,20 85,50 65,50 50,35" fill="#22c55e" opacity="0.8"/>
+    
+    <!-- Center table -->
+    <polygon points="50,35 65,50 50,65 35,50" fill="#86efac" opacity="0.6"/>
+    
+    <!-- Lower left facet -->
+    <polygon points="15,50 35,50 50,65 25,80" fill="#16a34a" opacity="0.9"/>
+    
+    <!-- Lower right facet -->
+    <polygon points="65,50 85,50 75,80 50,65" fill="url(#shadowGradient)" opacity="0.8"/>
+    
+    <!-- Bottom facet -->
+    <polygon points="50,65 75,80 50,92 25,80" fill="#166534"/>
+    
+    <!-- Highlight shine -->
+    <ellipse cx="40" cy="28" rx="8" ry="4" fill="white" opacity="0.5"/>
+    <ellipse cx="38" cy="26" rx="3" ry="2" fill="white" opacity="0.8"/>
+  </g>
+</svg>

@@ -1,0 +1,16 @@
+{
+  "name": "test",
+  "appName": "",
+  "messages": [],
+  "mobileScreenshots": [],
+  "desktopScreenshots": [],
+  "collectedAnswers": [],
+  "analysisContext": null,
+  "allTestCases": [],
+  "runHistory": {},
+  "pendingQuestions": [],
+  "currentQ": null,
+  "reusableModules": [],
+  "version": 1,
+  "savedAt": "2026-02-04T10:25:22.325Z"
+}
